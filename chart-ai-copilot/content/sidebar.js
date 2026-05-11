@@ -590,22 +590,24 @@
         <button class="batch-item-expand" data-symbol="${escapeHtml(symbol)}">&#9658;</button>
       `;
     } else {
+      const hint = result ? escapeHtml(JSON.stringify(result).slice(0, 120)) : '無回應';
       item.className = 'batch-item batch-item--error';
       item.innerHTML = `
         <span class="batch-item-symbol">${escapeHtml(symbol)}</span>
-        <span class="batch-item-status error-text">分析失敗</span>
+        <span class="batch-item-status error-text" title="${hint}">格式異常（hover查看）</span>
       `;
     }
   }
 
-  function updateBatchItemError(symbol) {
+  function updateBatchItemError(symbol, errorMsg) {
     if (!shadow) return;
     const item = shadow.querySelector(`.batch-item[data-symbol="${CSS.escape(symbol)}"]`);
     if (!item) return;
     item.className = 'batch-item batch-item--error';
+    const shortErr = errorMsg ? escapeHtml(String(errorMsg).slice(0, 80)) : '';
     item.innerHTML = `
       <span class="batch-item-symbol">${escapeHtml(symbol)}</span>
-      <span class="batch-item-status error-text">分析失敗</span>
+      <span class="batch-item-status error-text" title="${escapeHtml(errorMsg || '')}">分析失敗${shortErr ? '：' + shortErr : ''}</span>
     `;
   }
 
@@ -1782,7 +1784,7 @@
 
     // Update the item row in the UI
     if (errorMsg) {
-      updateBatchItemError(symbol);
+      updateBatchItemError(symbol, errorMsg);
     } else {
       updateBatchItemDone(symbol, result);
     }
