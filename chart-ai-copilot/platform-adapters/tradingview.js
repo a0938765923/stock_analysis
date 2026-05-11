@@ -61,7 +61,7 @@
     // ── Symbol switching (batch auto-scan) ───────────────────────────────────
 
     async setSymbol(symbol) {
-      // Selectors for the visible search input (appears after opening symbol search)
+      // Selectors for the visible search input (appears after symbol search opens)
       const INPUT_SELS = [
         '[class*="search-bar-field"] input',
         '[class*="search-bar"] input',
@@ -76,7 +76,6 @@
       const findInput = () => {
         for (const sel of INPUT_SELS) {
           const el = document.querySelector(sel);
-          // Must be actually visible (not hidden by parent)
           if (el && el.offsetParent !== null) return el;
         }
         return null;
@@ -84,34 +83,41 @@
 
       // ── Step 1: open the symbol search dialog ────────────────────────────
       let input = findInput();
+
       if (!input) {
-        // Try clicking the symbol name / legend area
-        const TRIGGER_SELS = [
-          '[data-name="legend-source-title"]',
-          '[class*="pane-legend-title__description"]',
-          '[class*="pane-legend-title"]',
-          '[class*="symbolInfoBlock"]',
-          '[class*="chart-header"] [class*="symbol"]',
+        // Approach A: keyboard shortcut '/' — TradingView's global handler opens symbol search.
+        // Blur any focused element first so the keydown isn't captured by an input/editor.
+        if (document.activeElement && document.activeElement !== document.body) {
+          document.activeElement.blur();
+          await _sleep(80);
+        }
+        // Dispatch to document AND window for maximum coverage
+        const slashEvent = () => new KeyboardEvent('keydown', {
+          key: '/', code: 'Slash', keyCode: 191, which: 191, bubbles: true, cancelable: true
+        });
+        document.dispatchEvent(slashEvent());
+        window.dispatchEvent(slashEvent());
+        await _sleep(800);
+        input = findInput();
+      }
+
+      if (!input) {
+        // Approach B: click the header toolbar symbol button (NOT the chart legend)
+        const HEADER_BTN_SELS = [
+          '#header-toolbar-symbol-search',
+          '[data-name="header-toolbar-symbol-search"]',
+          '[data-name="symbol-search-button"]',
+          '[id*="symbol-search"]',
         ];
-        for (const sel of TRIGGER_SELS) {
+        for (const sel of HEADER_BTN_SELS) {
           const el = document.querySelector(sel);
           if (el) {
-            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-            await _sleep(500);
+            el.click();
+            await _sleep(600);
             input = findInput();
             if (input) break;
           }
         }
-      }
-
-      // Fallback: keyboard shortcut — TradingView opens symbol search on '/'
-      if (!input) {
-        document.body.focus();
-        document.body.dispatchEvent(new KeyboardEvent('keydown', {
-          key: '/', code: 'Slash', keyCode: 191, bubbles: true, cancelable: true
-        }));
-        await _sleep(700);
-        input = findInput();
       }
 
       if (!input) {
@@ -120,12 +126,11 @@
 
       // ── Step 2: fill in the symbol (React-compatible value setter) ────────
       input.focus();
-      // Clear first
       const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
       if (nativeSetter) {
         nativeSetter.call(input, '');
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        await _sleep(100);
+        await _sleep(80);
         nativeSetter.call(input, symbol);
       } else {
         input.value = symbol;
@@ -143,7 +148,7 @@
         }));
       });
 
-      // Backup: also click the first visible result row
+      // Backup: click the first visible result row
       await _sleep(400);
       const RESULT_SELS = [
         '[class*="listRow"]:first-child',
