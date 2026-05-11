@@ -85,28 +85,10 @@
       let input = findInput();
 
       if (!input) {
-        // Approach A: keyboard shortcut '/' — TradingView's global handler opens symbol search.
-        // Blur any focused element first so the keydown isn't captured by an input/editor.
-        if (document.activeElement && document.activeElement !== document.body) {
-          document.activeElement.blur();
-          await _sleep(80);
-        }
-        // Dispatch to document AND window for maximum coverage
-        const slashEvent = () => new KeyboardEvent('keydown', {
-          key: '/', code: 'Slash', keyCode: 191, which: 191, bubbles: true, cancelable: true
-        });
-        document.dispatchEvent(slashEvent());
-        window.dispatchEvent(slashEvent());
-        await _sleep(800);
-        input = findInput();
-      }
-
-      if (!input) {
-        // Approach B: click the header toolbar symbol button (NOT the chart legend)
+        // Approach A: click the header toolbar symbol button (most reliable — confirmed ID)
         const HEADER_BTN_SELS = [
           '#header-toolbar-symbol-search',
           '[data-name="header-toolbar-symbol-search"]',
-          '[data-name="symbol-search-button"]',
           '[id*="symbol-search"]',
         ];
         for (const sel of HEADER_BTN_SELS) {
@@ -118,6 +100,21 @@
             if (input) break;
           }
         }
+      }
+
+      if (!input) {
+        // Approach B: keyboard shortcut '/' — blur active element first so it reaches TradingView's handler
+        if (document.activeElement && document.activeElement !== document.body) {
+          document.activeElement.blur();
+          await _sleep(80);
+        }
+        const slashEvent = () => new KeyboardEvent('keydown', {
+          key: '/', code: 'Slash', keyCode: 191, which: 191, bubbles: true, cancelable: true
+        });
+        document.dispatchEvent(slashEvent());
+        window.dispatchEvent(slashEvent());
+        await _sleep(800);
+        input = findInput();
       }
 
       if (!input) {
