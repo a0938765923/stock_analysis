@@ -111,6 +111,56 @@
     ].join('\n');
   }
 
+  // ── Entry strategy & key scenarios HTML builders ─────────────────────────
+
+  function buildStrategyHtml(strategy) {
+    if (!strategy || (!strategy.plan_a && !strategy.plan_b)) return '';
+
+    function planHtml(plan, isRec) {
+      if (!plan) return '';
+      const rrRows = isRec
+        ? (plan.rr_tp1 ? `<div class="strategy-plan-row"><span class="strategy-label">R:R (TP1)</span><span class="strategy-rr">${escapeHtml(plan.rr_tp1)}</span></div>` : '') +
+          (plan.rr_tp2 ? `<div class="strategy-plan-row"><span class="strategy-label">R:R (TP2)</span><span class="strategy-rr strategy-rr--good">${escapeHtml(plan.rr_tp2)}</span></div>` : '')
+        : (plan.rr ? `<div class="strategy-plan-row"><span class="strategy-label">R:R</span><span class="strategy-rr">${escapeHtml(plan.rr)}</span></div>` : '');
+      return `
+        <div class="strategy-plan${isRec ? ' strategy-plan--rec' : ' strategy-plan--alt'}">
+          <div class="strategy-plan-header">
+            <span class="strategy-plan-title">${escapeHtml(plan.label || '')}</span>
+            ${isRec ? '<span class="strategy-badge strategy-badge--rec">推薦 ✅</span>' : '<span class="strategy-badge strategy-badge--alt">備選</span>'}
+          </div>
+          <div class="strategy-plan-row"><span class="strategy-label">觸發條件</span><span class="strategy-value">${escapeHtml(plan.trigger || '')}</span></div>
+          <div class="strategy-plan-row"><span class="strategy-label">確認信號</span><span class="strategy-value">${escapeHtml(plan.confirmation || '')}</span></div>
+          <div class="strategy-plan-row"><span class="strategy-label">入場價</span><span class="strategy-price">${escapeHtml(plan.entry || '')}</span></div>
+          ${rrRows}
+          ${!isRec && plan.note ? `<div class="strategy-plan-note">⚠ ${escapeHtml(plan.note)}</div>` : ''}
+        </div>`;
+    }
+
+    return `
+      <div class="result-section strategy-section">
+        <span class="result-label">執行策略</span>
+        <div class="strategy-plans">
+          ${planHtml(strategy.plan_a, true)}
+          ${planHtml(strategy.plan_b, false)}
+        </div>
+      </div>`;
+  }
+
+  function buildScenariosHtml(scenarios) {
+    if (!Array.isArray(scenarios) || !scenarios.length) return '';
+    return `
+      <div class="result-section">
+        <span class="result-label">關鍵情境</span>
+        <div class="scenario-list">
+          ${scenarios.map(s => `
+            <div class="scenario-item">
+              <div class="scenario-condition">${escapeHtml(s.condition || '')}</div>
+              <div class="scenario-action">→ ${escapeHtml(s.action || '')}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
   // ── Result card HTML builder ─────────────────────────────────────────────
 
   function buildResultCardHtml(result, timestamp, lotInfo) {
@@ -215,6 +265,10 @@
           <span class="result-label">指標總評</span>
           ${techSummaryHtml}
         </div>` : ''}
+
+        ${buildStrategyHtml(result.entry_strategy)}
+
+        ${buildScenariosHtml(result.key_scenarios)}
 
         ${lotHtml}
 

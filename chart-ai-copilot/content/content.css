@@ -323,6 +323,152 @@
   color: #00d4ff;
 }
 
+/* ── Entry strategy section ───────────────── */
+
+.strategy-section {
+  padding-top: 6px;
+}
+
+.strategy-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.strategy-plan {
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.strategy-plan--rec {
+  background: rgba(0, 200, 83, 0.07);
+  border: 1px solid rgba(0, 200, 83, 0.25);
+}
+
+.strategy-plan--alt {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.strategy-plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.strategy-plan-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e0e0e0;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.strategy-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.strategy-badge--rec {
+  background: rgba(0, 200, 83, 0.15);
+  color: #00c853;
+  border: 1px solid rgba(0, 200, 83, 0.3);
+}
+
+.strategy-badge--alt {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.strategy-plan-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.strategy-label {
+  color: #777;
+  font-size: 10px;
+  min-width: 52px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.strategy-value {
+  color: #ccc;
+  font-size: 11px;
+  flex: 1;
+  line-height: 1.45;
+}
+
+.strategy-price {
+  color: #00d4ff;
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.strategy-rr {
+  font-size: 12px;
+  font-weight: 700;
+  color: #aaa;
+  flex: 1;
+}
+
+.strategy-rr--good {
+  color: #00c853;
+}
+
+.strategy-plan-note {
+  font-size: 10px;
+  color: #ffb74d;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ── Key scenarios section ────────────────── */
+
+.scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.scenario-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 5px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scenario-condition {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ddd;
+  line-height: 1.4;
+}
+
+.scenario-action {
+  font-size: 11px;
+  color: #aaa;
+  line-height: 1.4;
+}
+
 .risk-warning {
   background: rgba(255, 152, 0, 0.12);
   border: 1px solid rgba(255, 152, 0, 0.35);

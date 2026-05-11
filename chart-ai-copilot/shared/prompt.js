@@ -82,12 +82,14 @@ ${directionHint ? directionHint + '\n' : ''}${buildContextSection(contextData)}
 8. 目標位計算 — TP1 設為最近阻力/支撐，TP2 設為延伸目標，計算 RR ratio
 9. 倉位建議 — 基於帳戶風險 ${riskPct}%，依 entry zone 至 stop loss 距離計算建議倉位（以合約或比例表示）
 10. 風險提示 — 列出此交易設定的主要風險因素（最少 2 項），包含各理論間的衝突信號
+11. 入場策略 — 提供兩種具體執行方案：方案A（推薦）為保守入場（等待回調至最佳區間或反轉確認），方案B（備選）為積極入場（突破確認追入）；每個方案須包含：觸發條件、確認信號、具體入場價、分別計算至TP1和TP2的風報比（方案A），或單一風報比與注意事項（方案B）
+12. 關鍵情境 — 列出 4 個關鍵市場情境及對應操作：①當前位置直接延續（錯過情境）②最佳入場觸發（最佳做多/做空機會）③止損結構失效（應止損離場情境）④延伸突破情境（上方/下方空間打開）
 
 觀察要點要求：至少提供 4 個具體觀察，涵蓋四大理論（趨勢線形態、K線型態名稱、指標讀值、消息面影響），並說明各理論間是否一致或有衝突。
 
 請嚴格以下方 JSON 格式回覆，不要包含任何 JSON 以外的文字、不要使用 markdown 代碼塊、不要輸出 <think> 標籤：
 
-{"symbol":"從圖表識別交易對或股票代號","timeframe":"從圖表識別時間框架","trend":"主趨勢描述","direction":"long 或 short","entry_zone":"建議進場價格區間","stop_loss":"建議止損價格","stop_loss_reason":"止損位置的技術依據","tp1":"第一目標價格","tp2":"第二目標價格","rr_ratio":"風險報酬比例如 1:2.5","position_size":"建議倉位基於 ${riskPct}% 帳戶風險","holding_period":"預計持倉時間","key_points":["觀察要點1","觀察要點2","觀察要點3","觀察要點4"],"risk_warning":"主要風險因素","visible_high":從圖表右側Y軸刻度讀取的最高可視價格數字,"visible_low":從圖表右側Y軸刻度讀取的最低可視價格數字,"candlestick_patterns":["識別到的K線型態1（位置+預示）","型態2"],"technical_summary":{"overall":"綜合評級（如多偏多/看空等）","indicators":"關鍵指標讀值摘要"}}`;
+{"symbol":"從圖表識別交易對或股票代號","timeframe":"從圖表識別時間框架","trend":"主趨勢描述","direction":"long 或 short","entry_zone":"建議進場價格區間","stop_loss":"建議止損價格","stop_loss_reason":"止損位置的技術依據","tp1":"第一目標價格","tp2":"第二目標價格","rr_ratio":"風險報酬比例如 1:2.5","position_size":"建議倉位基於 ${riskPct}% 帳戶風險","holding_period":"預計持倉時間","key_points":["觀察要點1","觀察要點2","觀察要點3","觀察要點4"],"risk_warning":"主要風險因素","visible_high":從圖表右側Y軸刻度讀取的最高可視價格數字,"visible_low":從圖表右側Y軸刻度讀取的最低可視價格數字,"candlestick_patterns":["識別到的K線型態1（位置+預示）","型態2"],"technical_summary":{"overall":"綜合評級（如多偏多/看空等）","indicators":"關鍵指標讀值摘要"},"entry_strategy":{"plan_a":{"label":"方案A標題（推薦）","recommended":true,"trigger":"觸發入場的市場條件（如價格跌至哪個區間）","confirmation":"確認入場的技術信號（如K線型態+位置）","entry":"具體入場價格","rr_tp1":"至TP1的風報比如1.69:1","rr_tp2":"至TP2的風報比如2.43:1"},"plan_b":{"label":"方案B標題（備選）","recommended":false,"trigger":"觸發條件（如突破某價位）","confirmation":"確認信號（如收線站穩+量能）","entry":"入場價格","rr":"風報比如2.0:1","note":"重要注意事項（如倉位控制建議）"}},"key_scenarios":[{"condition":"情境一：當前位置直接延續","action":"對應操作（如錯過最佳入場，不追價，等待回調）"},{"condition":"情境二：最佳入場區出現反轉信號","action":"對應操作（最佳做多機會，果斷入場）"},{"condition":"情境三：跌破關鍵止損位","action":"對應操作（結構失效，暫停計劃，重新評估）"},{"condition":"情境四：突破上方壓力位","action":"對應操作（上行空間打開，考慮方案B或等待回踩）"}]}`;
   }
 
   function buildMultiPrompt(settings, direction, platformName, templateBody, contextData) {
@@ -141,12 +143,14 @@ ${directionHint ? directionHint + '\n' : ''}${buildContextSection(contextData)}
 8. 目標位計算 — TP1/TP2 參考 4H 關鍵阻力/支撐延伸
 9. 倉位建議 — 基於帳戶風險 ${riskPct}%，依 entry 至 SL 距離計算
 10. 風險提示 — 說明三個時框若出現背離時的處理原則，包含各理論間的衝突信號
+11. 入場策略 — 提供兩種具體執行方案：方案A（推薦）為保守入場（等待回調至最佳區間或15M反轉確認），方案B（備選）為積極入場（突破確認追入）；每個方案須包含：觸發條件、確認信號、具體入場價、分別計算至TP1和TP2的風報比
+12. 關鍵情境 — 列出 4 個關鍵市場情境及對應操作：①當前位置直接延續②最佳入場觸發③止損結構失效④延伸突破情境
 
 觀察要點要求：至少提供 4 個跨時框的具體觀察（含時框間的 confluence、背離或衝突信號，涵蓋趨勢線、K線型態、指標讀值）。
 
 請嚴格以下方 JSON 格式回覆，不要包含任何 JSON 以外的文字、不要使用 markdown 代碼塊、不要輸出 <think> 標籤：
 
-{"symbol":"從圖表識別交易對或股票代號","timeframe":"4H+1H+15M","trend":"主趨勢描述（含4H方向及1H確認）","direction":"long 或 short","entry_zone":"建議進場價格區間（基於15M精確點位）","stop_loss":"建議止損價格","stop_loss_reason":"止損位置的技術依據","tp1":"第一目標價格","tp2":"第二目標價格","rr_ratio":"風險報酬比例如 1:2.5","position_size":"建議倉位基於 ${riskPct}% 帳戶風險","holding_period":"預計持倉時間","key_points":["4H趨勢觀察","1H結構確認","15M精確進場信號","跨時框一致性說明"],"risk_warning":"主要風險因素","visible_high":從15M截圖右側Y軸刻度讀取的最高可視價格數字,"visible_low":從15M截圖右側Y軸刻度讀取的最低可視價格數字,"candlestick_patterns":["識別到的K線型態1（時框+位置+預示）","型態2"],"technical_summary":{"overall":"綜合評級（如多偏多/看空等）","indicators":"各時框關鍵指標讀值摘要"}}`;
+{"symbol":"從圖表識別交易對或股票代號","timeframe":"4H+1H+15M","trend":"主趨勢描述（含4H方向及1H確認）","direction":"long 或 short","entry_zone":"建議進場價格區間（基於15M精確點位）","stop_loss":"建議止損價格","stop_loss_reason":"止損位置的技術依據","tp1":"第一目標價格","tp2":"第二目標價格","rr_ratio":"風險報酬比例如 1:2.5","position_size":"建議倉位基於 ${riskPct}% 帳戶風險","holding_period":"預計持倉時間","key_points":["4H趨勢觀察","1H結構確認","15M精確進場信號","跨時框一致性說明"],"risk_warning":"主要風險因素","visible_high":從15M截圖右側Y軸刻度讀取的最高可視價格數字,"visible_low":從15M截圖右側Y軸刻度讀取的最低可視價格數字,"candlestick_patterns":["識別到的K線型態1（時框+位置+預示）","型態2"],"technical_summary":{"overall":"綜合評級（如多偏多/看空等）","indicators":"各時框關鍵指標讀值摘要"},"entry_strategy":{"plan_a":{"label":"方案A標題（推薦）","recommended":true,"trigger":"觸發條件","confirmation":"確認信號（含具體時框）","entry":"入場價格","rr_tp1":"至TP1風報比","rr_tp2":"至TP2風報比"},"plan_b":{"label":"方案B標題（備選）","recommended":false,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr":"風報比","note":"注意事項"}},"key_scenarios":[{"condition":"情境一：當前位置直接延續","action":"對應操作"},{"condition":"情境二：最佳入場區觸發","action":"對應操作"},{"condition":"情境三：止損結構失效","action":"對應操作"},{"condition":"情境四：突破延伸","action":"對應操作"}]}`;
   }
 
   Object.assign(window.__chartAI, {

@@ -34,7 +34,9 @@
     'candlestick_patterns',
     'technical_summary',
     'visible_high',
-    'visible_low'
+    'visible_low',
+    'entry_strategy',
+    'key_scenarios'
   ];
 
   const SCHEMA_INSTRUCTION =
@@ -46,7 +48,9 @@
     '"key_points":["觀察要點1","觀察要點2","觀察要點3","觀察要點4"],' +
     '"risk_warning":"主要風險因素","visible_high":最高可視價格數字,"visible_low":最低可視價格數字,' +
     '"candlestick_patterns":["K線型態1","K線型態2"],' +
-    '"technical_summary":{"overall":"綜合評級","indicators":"關鍵指標摘要"}}';
+    '"technical_summary":{"overall":"綜合評級","indicators":"關鍵指標摘要"},' +
+    '"entry_strategy":{"plan_a":{"label":"方案A標題（推薦）","recommended":true,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr_tp1":"至TP1風報比","rr_tp2":"至TP2風報比"},"plan_b":{"label":"方案B標題（備選）","recommended":false,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr":"風報比","note":"注意事項"}},' +
+    '"key_scenarios":[{"condition":"情境一描述","action":"對應操作"},{"condition":"情境二描述","action":"對應操作"},{"condition":"情境三描述（止損觸發）","action":"對應操作"},{"condition":"情境四描述（突破延伸）","action":"對應操作"}]}';
 
   Object.assign(window.__chartAI, {
     parseJSON,
