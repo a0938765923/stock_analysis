@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Chart AI — API 診斷測試</title>
+<style>
+  body { font-family: monospace; max-width: 900px; margin: 30px auto; padding: 0 20px; background: #0d1117; color: #c9d1d9; }
+  h2 { color: #58a6ff; }
+  label { display: block; margin: 10px 0 4px; color: #8b949e; font-size: 13px; }
+  input, textarea { width: 100%; box-sizing: border-box; padding: 8px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-family: monospace; font-size: 13px; }
+  button { margin: 6px 4px 6px 0; padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; }
+  .btn-primary { background: #238636; color: #fff; }
+  .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+  .btn-primary:hover { background: #2ea043; }
+  .btn-secondary:hover { background: #30363d; }
+  #log { margin-top: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; min-height: 200px; max-height: 600px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+  .ok   { color: #3fb950; }
+  .err  { color: #f85149; }
+  .warn { color: #d29922; }
+  .info { color: #58a6ff; }
+  .dim  { color: #8b949e; }
+  hr { border: none; border-top: 1px solid #30363d; margin: 20px 0; }
+  .section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h2>🔬 Chart AI — API 診斷測試</h2>
+<p class="dim" style="font-size:13px;line-height:1.5;margin-bottom:16px">
+  ② Vision 測試若失敗，請在 Chrome 開發者工具重新載入擴充後，於 TradingView 側欄再試一次：
+  自訂 Provider 已對 <strong>554</strong>／部分多模態相關錯誤自動輪詢多種 <code>image_url</code> 請求格式。
+</p>
+
+<div class="section">
+  <label>Base URL（中轉服務網址）</label>
+  <input id="baseUrl" placeholder="https://your-relay.com/v1" />
+
+  <label>API Key</label>
+  <input id="apiKey" type="password" placeholder="sk-..." />
+
+  <label>Model</label>
+  <input id="model" placeholder="gpt-5.5 / deepseek-v3.2 / ..." />
+
+  <label style="margin-top:14px">
+    <input type="checkbox" id="useVision" checked />
+    &nbsp;包含圖片（Vision 模式）
+  </label>
+</div>
+
+<button class="btn-primary" onclick="runAll()">▶ 全部測試</button>
+<button class="btn-secondary" onclick="testConnect()">① 連線測試</button>
+<button class="btn-secondary" onclick="testVision()">② Vision 測試</button>
+<button class="btn-secondary" onclick="testFullPrompt()">③ 完整分析 prompt（JSON）</button>
+<button class="btn-secondary" onclick="testLargeImage()">④ 大圖測試（1280px）</button>
+<button class="btn-secondary" onclick="clearLog()">清除</button>
+
+<div id="log"><span class="dim">等待測試...</span></div>
+
+<script>
+const log = document.getElementById('log');
+function append(msg, cls) {
+  const span = document.createElement('span');
+  span.className = cls || '';
+  span.textContent = msg + '\n';
+  log.appendChild(span);
+  log.scrollTop = log.scrollHeight;
+}
+function clearLog() { log.innerHTML = ''; }
+function ts() { return new Date().toLocaleTimeString('zh-TW', { hour12: false }); }
+
+function resolveEndpoint(baseUrl) {
+  if (!baseUrl) throw new Error('請填入 Base URL');
+  const url = baseUrl.trim().replace(/\/$/, '');
+  if (url.endsWith('/chat/completions')) return url;
+  if (url.endsWith('/v1')) return url + '/chat/completions';
+  if (!url.includes('/v1')) return url + '/v1/chat/completions';
+  return url + '/chat/completions';
+}
+
+// 1×1 白色像素 JPEG (base64) — 最小可能的圖片 payload
+const TINY_IMAGE = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AJQAB/9k=';
+
+// 實際截圖尺寸測試圖 (320×180 灰色) — 模擬真實截圖
+function makeTestImage() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 320; canvas.height = 180;
+  const ctx = canvas.getContext('2d');
+  // 灰色背景
+  ctx.fillStyle = '#1e222d';
+  ctx.fillRect(0, 0, 320, 180);
+  // 模擬K線
+  ctx.strokeStyle = '#26a69a'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(20, 140); ctx.lineTo(300, 50); ctx.stroke();
+  // 標籤
+  ctx.fillStyle = '#c9d1d9'; ctx.font = '12px monospace';
+  ctx.fillText('TEST CHART - BTC/USDT 1H', 20, 20);
+  ctx.fillText('Close: 42,500', 20, 160);
+  return canvas.toDataURL('image/jpeg', 0.75);
+}
+
+// 透過 extension service worker 轉發請求，繞過 CORS
+function swFetch(endpoint, apiKey, model, messages, maxTokens) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      { type: 'TEST_API', payload: { endpoint, apiKey, model, messages, maxTokens } },
+      (resp) => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(resp);
+      }
+    );
+  });
+}
+
+async function callApi(messages, label, maxTokens) {
+  const baseUrl = document.getElementById('baseUrl').value.trim();
+  const apiKey  = document.getElementById('apiKey').value.trim();
+  const model   = document.getElementById('model').value.trim();
+
+  if (!baseUrl || !apiKey || !model) {
+    append('❌ 請先填入 Base URL、API Key、Model', 'err');
+    return null;
+  }
+
+  let endpoint;
+  try { endpoint = resolveEndpoint(baseUrl); }
+  catch(e) { append('❌ ' + e.message, 'err'); return null; }
+
+  append(`\n[${ts()}] ── ${label} ──`, 'info');
+  append(`端點: ${endpoint}`, 'dim');
+  append(`模型: ${model}`, 'dim');
+  append(`Payload 大小: ~${(JSON.stringify(messages).length / 1024).toFixed(1)} KB`, 'dim');
+
+  let r;
+  try {
+    r = await swFetch(endpoint, apiKey, model, messages, maxTokens || 2048);
+  } catch(e) {
+    append(`❌ Service Worker 通訊失敗: ${e.message}`, 'err');
+    return null;
+  }
+
+  append(`HTTP ${r.status} ${r.statusText}  (${r.elapsed}ms)`, r.ok ? 'ok' : 'err');
+  append(`回應大小: ${r.rawText.length} bytes`, 'dim');
+
+  if (!r.parsed) {
+    const stripped = r.rawText.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,300);
+    append(`回應內容（非JSON）: ${stripped}`, 'warn');
+    return { status: r.status, ok: false, raw: r.rawText };
+  }
+
+  if (!r.ok) {
+    const msg = (r.parsed.error && r.parsed.error.message) || r.parsed.message || JSON.stringify(r.parsed);
+    append(`錯誤訊息: ${msg}`, 'err');
+    return { status: r.status, ok: false, parsed: r.parsed };
+  }
+
+  const content = r.parsed.choices?.[0]?.message?.content;
+  if (content) {
+    append(`✅ AI 回應: ${content.slice(0, 200)}`, 'ok');
+  } else {
+    append(`⚠ 回應格式異常: ${JSON.stringify(r.parsed).slice(0,200)}`, 'warn');
+  }
+  if (r.parsed.usage) {
+    append(`Token: prompt=${r.parsed.usage.prompt_tokens} completion=${r.parsed.usage.completion_tokens}`, 'dim');
+  }
+  return { status: r.status, ok: true, parsed: r.parsed, content };
+}
+
+async function testConnect() {
+  clearLog();
+  append('=== 連線測試（純文字 ping）===', 'info');
+  const result = await callApi([{ role: 'user', content: '請回覆數字 42' }], '純文字 ping');
+  if (result?.ok) append('✅ 連線正常，純文字可用', 'ok');
+}
+
+async function testVision() {
+  clearLog();
+  append('=== Vision 測試（帶圖片）===', 'info');
+  const img = makeTestImage();
+  append(`測試圖尺寸: 320×180 JPEG, ${(img.length/1024).toFixed(1)} KB`, 'dim');
+  const result = await callApi([{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: img } },
+      { type: 'text', text: '這張圖片裡有什麼文字？請簡短回答。' }
+    ]
+  }], 'Vision 圖片分析');
+
+  if (result?.ok) append('✅ Vision 支援正常！可以分析圖表。', 'ok');
+  else if (result?.status === 554) append('❌ 554 = 模型不支援 Vision。請改用 vision 模型。', 'err');
+  else if (result?.status === 400) append('❌ 400 = 請求格式錯誤或模型不支援圖片。', 'err');
+}
+
+function makeLargeTestImage() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1280; canvas.height = 720;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#1e222d'; ctx.fillRect(0, 0, 1280, 720);
+  // 模擬 K 線群
+  for (let i = 0; i < 80; i++) {
+    const x = 40 + i * 15;
+    const open  = 200 + Math.random() * 300;
+    const close = open + (Math.random() - 0.48) * 60;
+    const high  = Math.min(open, close) - Math.random() * 20;
+    const low   = Math.max(open, close) + Math.random() * 20;
+    ctx.strokeStyle = close > open ? '#26a69a' : '#ef5350';
+    ctx.fillStyle   = close > open ? '#26a69a' : '#ef5350';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, high); ctx.lineTo(x, low); ctx.stroke();
+    ctx.fillRect(x - 4, Math.min(open, close), 8, Math.abs(close - open) || 1);
+  }
+  ctx.fillStyle = '#c9d1d9'; ctx.font = '14px monospace';
+  ctx.fillText('XAUUSD • 1H • OANDA', 20, 24);
+  ctx.fillText('2685.50', 1180, 350);
+  ctx.fillText('2700.00', 1180, 200);
+  ctx.fillText('2670.00', 1180, 500);
+  return canvas.toDataURL('image/jpeg', 0.75);
+}
+
+const FULL_PROMPT = `你是一位專業的金融技術分析師。請以繁體中文回應，使用正確的金融術語。
+請依照四大理論框架進行分析：
+【理論一：趨勢線理論】趨勢識別 — 判斷上升趨勢、下降趨勢、盤整區間
+【理論二：K線型態學】識別K線組合型態（如錘子線、吞噬、晨星等）
+【理論三：消息面參考】從圖表結構推斷市場情緒
+【理論四：技術指標】從圖表識別可見指標（RSI、MACD、布林通道等）
+請嚴格以下方 JSON 格式回覆，不要包含任何 JSON 以外的文字，不要使用 markdown 代碼塊：
+{"symbol":"交易對","timeframe":"時間框架","trend":"趨勢描述","direction":"long 或 short","entry_zone":"進場區間","stop_loss":"止損","stop_loss_reason":"止損依據","tp1":"目標1","tp2":"目標2","rr_ratio":"風險報酬比","position_size":"倉位建議","holding_period":"持倉時間","key_points":["要點1","要點2","要點3","要點4"],"risk_warning":"風險","visible_high":0,"visible_low":0,"candlestick_patterns":["型態1"],"technical_summary":{"overall":"評級","indicators":"指標摘要"}}`;
+
+async function testFullPrompt() {
+  clearLog();
+  append('=== ③ 完整分析 prompt 測試（JSON 解析）===', 'info');
+  const img = makeLargeTestImage();
+  append(`測試圖: 1280×720 JPEG, ${(img.length/1024).toFixed(1)} KB`, 'dim');
+
+  const result = await callApi([{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: img } },
+      { type: 'text', text: FULL_PROMPT }
+    ]
+  }], '完整分析 prompt');
+
+  if (!result?.ok) return;
+
+  const raw = result.content;
+  append('\n--- JSON 解析測試 ---', 'info');
+  append(`原始回應 (前500字):\n${raw.slice(0, 500)}`, 'dim');
+
+  // 模擬 extension 的 parseJSON 邏輯
+  let cleaned = raw
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/```(?:json)?\s*/g, '')
+    .replace(/```\s*$/g, '')
+    .trim();
+  try {
+    const obj = JSON.parse(cleaned);
+    append('\n✅ JSON 解析成功！', 'ok');
+    append(`symbol: ${obj.symbol}`, 'ok');
+    append(`direction: ${obj.direction}`, 'ok');
+    append(`entry_zone: ${obj.entry_zone}`, 'ok');
+  } catch(e) {
+    append('\n❌ JSON 解析失敗: ' + e.message, 'err');
+    // 嘗試提取 {}
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        JSON.parse(match[0]);
+        append('⚠ 但找到嵌套 JSON 可提取，extension 的 fallback 應能處理', 'warn');
+      } catch(e2) {
+        append('❌ 嵌套 JSON 也無法解析：' + e2.message, 'err');
+        append('→ 模型回應格式問題，考慮加強 prompt 或換模型', 'warn');
+      }
+    } else {
+      append('❌ 回應中找不到任何 JSON 結構', 'err');
+      append('→ 模型沒有遵循 JSON 格式指令', 'warn');
+    }
+  }
+}
+
+async function testLargeImage() {
+  clearLog();
+  append('=== ④ 大圖測試（1280×720，模擬真實截圖）===', 'info');
+  const img = makeLargeTestImage();
+  append(`圖片大小: ${(img.length/1024).toFixed(1)} KB`, 'dim');
+  const result = await callApi([{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: img } },
+      { type: 'text', text: '這張圖表的交易對和大概價格範圍是什麼？' }
+    ]
+  }], '大圖 Vision 測試');
+  if (result?.ok) append('✅ 大圖 Vision 正常', 'ok');
+  else append('❌ 大圖失敗，可能是 token 超限或 payload 太大', 'err');
+}
+
+async function runAll() {
+  clearLog();
+  append('====== 全部診斷測試 ======\n', 'info');
+
+  append('--- ① 連線測試 ---', 'info');
+  const r1 = await callApi([{ role: 'user', content: '請回覆數字 42' }], '純文字 ping');
+
+  await new Promise(r => setTimeout(r, 500));
+
+  append('\n--- ② Vision 測試 ---', 'info');
+  const img = makeTestImage();
+  const r2 = await callApi([{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: img } },
+      { type: 'text', text: '這張圖片裡有什麼文字？' }
+    ]
+  }], 'Vision 圖片分析');
+
+  append('\n====== 診斷結果 ======', 'info');
+  if (!r1) {
+    append('❌ 連線失敗：請確認 Base URL 和 API Key 是否正確', 'err');
+  } else if (!r1.ok) {
+    append(`❌ API 錯誤 ${r1.status}：認證或端點問題`, 'err');
+  } else if (r2?.ok) {
+    append('✅ 一切正常！連線 OK，Vision 支援 OK', 'ok');
+    append('→ 分析失敗可能是截圖太大或 prompt 問題', 'warn');
+  } else if (r1?.ok && !r2?.ok) {
+    append('⚠ 連線 OK，但 Vision 不支援', 'warn');
+    if (r2?.status === 554) append('→ 這個模型不是 vision 模型，請換 deepseek-vl2 或 gpt-4o', 'warn');
+    else if (r2?.status === 400) append('→ 模型拒絕圖片格式，請確認中轉服務支援 image_url', 'warn');
+  }
+}
+</script>
+</body>
+</html>

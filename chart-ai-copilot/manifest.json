@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Chart AI Copilot",
+  "version": "0.4.0",
+  "description": "AI Chart Copilot — TradingView/Binance/Yahoo Finance, Telegram alerts, persistent memory, Pine Script generator",
+  "permissions": ["activeTab", "storage", "scripting", "tabs", "alarms", "clipboardWrite"],
+  "host_permissions": [
+    "https://www.tradingview.com/*",
+    "https://www.binance.com/*",
+    "https://www.binance.us/*",
+    "https://*.binance.com/*",
+    "https://finance.yahoo.com/*",
+    "https://www.investing.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.minimax.io/*",
+    "https://api.minimaxi.com/*",
+    "https://api.telegram.org/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*", "http://*/*"],
+      "js": [
+        "platform-adapters/tradingview.js",
+        "platform-adapters/binance.js",
+        "platform-adapters/yahoo-finance.js",
+        "platform-adapters/investing.js",
+        "platform-adapters/registry.js",
+        "shared/constants.js",
+        "shared/schema.js",
+        "shared/prompt.js",
+        "content/profile-memory.js",
+        "content/capture.js",
+        "content/draw.js",
+        "content/batch-scan.js",
+        "content/sidebar.js",
+        "content/alert-watcher.js",
+        "content/content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.tradingview.com/*", "https://*.tradingview.com/*"],
+      "js": ["content/pine-injector.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["content/content.css", "test/api-test.html"],
+      "matches": ["https://*/*", "http://*/*"]
+    }
+  ]
+}

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chart AI Copilot 設定</title>
+  <link rel="stylesheet" href="popup.css" />
+  <style>
+    /* ── Prompt templates section ── */
+    .settings-section {
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: #ccc;
+      transition: background 0.15s;
+    }
+    .section-header:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .toggle-icon {
+      font-size: 12px;
+      color: #888;
+      transition: transform 0.2s;
+    }
+    .settings-section--collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+    .section-body {
+      padding: 10px 12px 12px 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .settings-section--collapsed .section-body {
+      display: none;
+    }
+    .template-list-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .template-list-name {
+      flex: 1;
+      color: #e0e0e0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .template-default-badge {
+      background: rgba(0,200,83,0.12);
+      color: #00c853;
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 8px;
+      font-size: 10px;
+      padding: 1px 6px;
+      flex-shrink: 0;
+    }
+    .template-action-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 3px;
+      color: #888;
+      font-size: 10px;
+      padding: 2px 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .template-action-btn:hover {
+      background: rgba(255,255,255,0.06);
+      color: #ccc;
+    }
+    .template-action-btn--danger:hover {
+      background: rgba(244,67,54,0.1);
+      color: #ef5350;
+      border-color: rgba(244,67,54,0.3);
+    }
+    .template-action-btn--default-active {
+      background: rgba(0,200,83,0.08);
+      color: #00c853;
+      border-color: rgba(0,200,83,0.25);
+    }
+    .action-btn {
+      width: 100%;
+      padding: 7px;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 4px;
+      color: #00d4ff;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.15s;
+    }
+    .action-btn:hover {
+      background: rgba(0,212,255,0.15);
+    }
+    .template-body-input {
+      width: 100%;
+      background: #1a1a2e;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 12px;
+      padding: 8px;
+      font-family: monospace;
+      resize: vertical;
+      outline: none;
+      margin-top: 6px;
+      box-sizing: border-box;
+      transition: border-color 0.15s;
+    }
+    .template-body-input:focus {
+      border-color: #00d4ff;
+    }
+    .template-form-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .template-form-actions .save-btn {
+      flex: 1;
+    }
+    .cancel-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      color: #888;
+      font-size: 12px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cancel-btn:hover {
+      background: rgba(255,255,255,0.06);
+      color: #ccc;
+    }
+    #templateForm {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .template-char-count {
+      font-size: 10px;
+      color: #666;
+      text-align: right;
+      margin-top: 2px;
+    }
+    .template-char-count--warn {
+      color: #ffb74d;
+    }
+    .template-empty-hint {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      padding: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-container">
+    <div class="popup-header">
+      <span class="popup-title">&#128202; Chart AI Copilot</span>
+      <span class="popup-subtitle">v0.2</span>
+    </div>
+
+    <div class="popup-body">
+
+      <div class="form-section">
+        <label class="section-label">AI Provider</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="provider" value="anthropic" id="providerAnthropic" />
+            <span>Anthropic (Claude)</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="provider" value="minimax" id="providerMinimax" />
+            <span>MiniMax</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="provider" value="custom" id="providerCustom" />
+            <span>自訂（OpenAI 相容）</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Anthropic section -->
+      <div class="form-section provider-section" id="anthropic-section">
+        <label class="section-label">Anthropic 設定</label>
+
+        <div class="form-group">
+          <label class="field-label" for="anthropicApiKey">API Key</label>
+          <input
+            type="password"
+            id="anthropicApiKey"
+            class="text-input"
+            placeholder="sk-ant-..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="anthropicModel">Model</label>
+          <select id="anthropicModel" class="select-input">
+            <option value="claude-opus-4-5">Claude Opus 4.5（高品質）</option>
+            <option value="claude-sonnet-4-5" selected>Claude Sonnet 4.5（推薦）</option>
+            <option value="claude-haiku-4-5">Claude Haiku 4.5（低成本）</option>
+          </select>
+        </div>
+
+        <div class="form-group test-conn-group">
+          <button class="test-btn" id="testAnthropicBtn" data-provider="anthropic">測試連線</button>
+          <span class="test-result" id="testAnthropicResult"></span>
+        </div>
+      </div>
+
+      <!-- MiniMax section -->
+      <div class="form-section provider-section" id="minimax-section">
+        <label class="section-label">MiniMax 設定</label>
+
+        <div class="form-group">
+          <label class="field-label" for="minimaxApiKey">API Key</label>
+          <input
+            type="password"
+            id="minimaxApiKey"
+            class="text-input"
+            placeholder="your-minimax-api-key"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Region</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="minimaxRegion" value="global" id="regionGlobal" checked />
+              <span>海外 (api.minimax.io)</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="minimaxRegion" value="china" id="regionChina" />
+              <span>中國大陸 (api.minimaxi.com)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="minimaxModel">Model</label>
+          <select id="minimaxModel" class="select-input">
+            <option value="MiniMax-Text-01">MiniMax-Text-01</option>
+            <option value="MiniMax-M2.7">MiniMax-M2.7</option>
+            <option value="MiniMax-M2.5" selected>MiniMax-M2.5（推薦試用）</option>
+            <option value="MiniMax-M2.1">MiniMax-M2.1</option>
+            <option value="MiniMax-M2">MiniMax-M2</option>
+          </select>
+        </div>
+
+        <div class="form-group test-conn-group">
+          <button class="test-btn" id="testMinimaxBtn" data-provider="minimax">測試連線</button>
+          <span class="test-result" id="testMinimaxResult"></span>
+        </div>
+      </div>
+
+      <!-- Custom provider section -->
+      <div class="form-section provider-section" id="custom-section">
+        <label class="section-label">自訂 Provider 設定</label>
+
+        <div class="form-group">
+          <label class="field-label" for="customBaseUrl">Base URL</label>
+          <input
+            type="text"
+            id="customBaseUrl"
+            class="text-input"
+            placeholder="https://qweapi.com/v1"
+            autocomplete="off"
+          />
+          <span class="field-hint">不含結尾斜線，系統自動加 /chat/completions</span>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="customApiKey">API Key</label>
+          <input
+            type="password"
+            id="customApiKey"
+            class="text-input"
+            placeholder="sk-..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="customModel">Model 名稱</label>
+          <input
+            type="text"
+            id="customModel"
+            class="text-input"
+            placeholder="例：gpt-4o / claude-3-5-sonnet"
+            autocomplete="off"
+          />
+          <span class="field-hint">填入該服務支援的 model ID</span>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="customVision" checked />
+            支援圖片分析（Vision）
+          </label>
+          <span class="field-hint">關閉後改用純文字模式，適合文字模型（DeepSeek、Qwen 等非 vision 版）</span>
+        </div>
+
+        <div class="form-group test-conn-group">
+          <button class="test-btn" id="testCustomBtn" data-provider="custom">測試連線</button>
+          <span class="test-result" id="testCustomResult"></span>
+        </div>
+      </div>
+
+      <!-- General settings -->
+      <div class="form-section">
+        <div class="form-group">
+          <label class="field-label" for="accountBalance">帳戶資金（選填）</label>
+          <div class="inline-group">
+            <input
+              type="number"
+              id="accountBalance"
+              class="text-input text-input--narrow"
+              min="0"
+              step="1000"
+              value="0"
+              placeholder="10000"
+            />
+            <select id="accountCurrency" class="select-input select-input--small">
+              <option value="USD">USD</option>
+              <option value="USDT">USDT</option>
+              <option value="TWD">TWD</option>
+            </select>
+          </div>
+          <span class="field-hint">填入後自動計算每筆風險金額及建議手數</span>
+        </div>
+        <div class="form-group">
+          <label class="field-label" for="riskPct">單筆風險上限 (%)</label>
+          <input
+            type="number"
+            id="riskPct"
+            class="text-input text-input--narrow"
+            min="0.5"
+            max="5"
+            step="0.5"
+            value="1"
+          />
+          <span class="field-hint">每筆交易承擔的帳戶風險百分比 (0.5–5%)</span>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="lang">分析輸出語言</label>
+          <select id="lang" class="select-input">
+            <option value="en">English</option>
+            <option value="zh-TW" selected>繁體中文</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="ja">日本語</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Prompt Templates Section -->
+      <div class="settings-section settings-section--collapsed" id="templatesSection">
+        <div class="section-header" id="templatesSectionToggle">
+          <span>自訂 Prompt 模板</span>
+          <span class="toggle-icon">&#9662;</span>
+        </div>
+        <div class="section-body" id="templatesSectionBody">
+          <div id="templatesList">
+            <p class="template-empty-hint">尚無自訂模板</p>
+          </div>
+          <button class="action-btn" id="addTemplateBtn">+ 新增模板</button>
+
+          <!-- Add/Edit form (hidden by default) -->
+          <div id="templateForm" style="display:none;">
+            <input type="hidden" id="editingTemplateId" value="">
+            <input type="text" id="templateName" class="text-input" placeholder="模板名稱（最多50字）" maxlength="50" />
+            <textarea
+              id="templateBody"
+              class="template-body-input"
+              placeholder="分析 {{symbol}} 在 {{timeframe}} 時框的技術面...&#10;&#10;可用變數: {{symbol}} {{timeframe}} {{platform}} {{direction}}"
+              rows="8"
+              maxlength="2000"
+            ></textarea>
+            <div class="template-char-count" id="templateCharCount">0 / 2000</div>
+            <div class="template-form-actions">
+              <button class="save-btn" id="saveTemplateBtn">儲存</button>
+              <button class="cancel-btn" id="cancelTemplateBtn">取消</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Telegram 整合 -->
+      <div class="settings-section settings-section--collapsed" id="telegramSection">
+        <div class="section-header" id="telegramSectionToggle">
+          <span>📱 Telegram 整合</span>
+          <span class="toggle-icon">&#9662;</span>
+        </div>
+        <div class="section-body">
+
+          <div class="form-group">
+            <label class="field-label" for="telegramBotToken">Bot Token</label>
+            <input id="telegramBotToken" class="text-input" type="password"
+              placeholder="123456789:ABCdef..." autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label class="field-label" for="telegramChatId">Chat ID</label>
+            <input id="telegramChatId" class="text-input" type="text"
+              placeholder="你的 User ID（向 @userinfobot 查詢）">
+          </div>
+
+          <div class="form-group">
+            <button id="testTelegramBtn" class="test-btn" style="width:100%;margin-bottom:6px;">
+              🔗 測試 Telegram 連線
+            </button>
+            <span id="telegramTestStatus" class="test-result"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="radio-label">
+              <input type="checkbox" id="telegramAlertsEnabled">
+              <span>啟用 TradingView 警報推送</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="radio-label">
+              <input type="checkbox" id="telegramBriefingEnabled">
+              <span>每日市場簡報推送</span>
+            </label>
+          </div>
+
+          <div id="briefingOptions" style="display:none;">
+            <div class="form-group">
+              <label class="field-label" for="telegramBriefingTime">簡報時間</label>
+              <input id="telegramBriefingTime" class="text-input text-input--narrow" type="time" value="08:00">
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="telegramBriefingSymbols">觀察標的（每行一個，最多 10 個）</label>
+              <textarea id="telegramBriefingSymbols" class="template-body-input" rows="4"
+                placeholder="BTCUSDT&#10;SPY&#10;EURUSD"></textarea>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button id="saveBtn" class="save-btn">儲存設定</button>
+      </div>
+
+      <div id="toast" class="toast"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

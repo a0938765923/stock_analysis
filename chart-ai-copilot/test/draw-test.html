@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Draw.js 標線功能測試</title>
+<style>
+  body { margin: 0; background: #111; color: #eee; font-family: sans-serif; }
+  #controls { position: fixed; top: 0; right: 0; width: 340px; height: 100vh;
+    background: #16213e; padding: 16px; box-sizing: border-box; overflow-y: auto;
+    border-left: 1px solid rgba(255,255,255,0.1); z-index: 9999; }
+  #controls h2 { color: #00d4ff; margin: 0 0 12px; font-size: 14px; }
+  #controls label { display: block; font-size: 11px; color: #aaa; margin: 8px 0 2px; }
+  #controls input, #controls select {
+    width: 100%; background: #0f3460; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px; color: #eee; padding: 5px 8px; font-size: 12px;
+    box-sizing: border-box;
+  }
+  #controls button {
+    width: 100%; margin-top: 10px; padding: 8px; border: none; border-radius: 4px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .btn-draw { background: #0077cc; color: #fff; }
+  .btn-clear { background: rgba(244,67,54,0.2); color: #ef5350;
+    border: 1px solid rgba(244,67,54,0.3); }
+  #log { margin-top: 12px; font-size: 11px; background: rgba(0,0,0,0.3);
+    border-radius: 4px; padding: 8px; min-height: 60px; color: #aaa; white-space: pre-wrap; }
+  #chart-area {
+    position: absolute; left: 0; top: 0;
+    width: calc(100vw - 340px); height: 100vh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 50%, #1a1a2e 100%);
+    overflow: hidden;
+  }
+  /* Fake chart grid */
+  #chart-area::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 60px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 80px);
+  }
+  #chart-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.2); font-size: 18px; font-weight: bold; text-align: center;
+  }
+  /* Y-axis mock */
+  #yaxis {
+    position: absolute; right: 0; top: 0; width: 70px; height: 100%;
+    background: rgba(0,0,0,0.3); border-left: 1px solid rgba(255,255,255,0.1);
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 10px 6px; box-sizing: border-box; font-size: 10px; color: #666;
+  }
+  .section-title { font-size: 10px; color: #555; text-transform: uppercase;
+    letter-spacing: 0.5px; margin: 12px 0 4px; border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<div id="chart-area">
+  <div id="chart-label">模擬圖表區域<br><small style="font-size:12px;font-weight:normal;">Fake Chart Canvas</small></div>
+  <div id="yaxis">
+    <span id="y-top">—</span>
+    <span>—</span>
+    <span>—</span>
+    <span>—</span>
+    <span id="y-mid">—</span>
+    <span>—</span>
+    <span>—</span>
+    <span>—</span>
+    <span id="y-bot">—</span>
+  </div>
+</div>
+
+<div id="controls">
+  <h2>📍 Draw.js 標線測試</h2>
+
+  <div class="section-title">可視價格範圍 (Y軸)</div>
+  <label>頂部 (visible_high)</label>
+  <input id="inpHigh" type="number" step="any" value="1.2950">
+  <label>底部 (visible_low)</label>
+  <input id="inpLow" type="number" step="any" value="1.2550">
+
+  <div class="section-title">分析結果</div>
+  <label>方向</label>
+  <select id="inpDir">
+    <option value="long">做多 LONG</option>
+    <option value="short">做空 SHORT</option>
+  </select>
+  <label>進場區 (entry_zone)</label>
+  <input id="inpEntry" type="text" value="1.2720-1.2750">
+  <label>停損 (stop_loss)</label>
+  <input id="inpSL" type="text" value="1.2680">
+  <label>TP1</label>
+  <input id="inpTP1" type="text" value="1.2820">
+  <label>TP2</label>
+  <input id="inpTP2" type="text" value="1.2900">
+
+  <button class="btn-draw" onclick="testDraw()">▶ 畫線</button>
+  <button class="btn-clear" onclick="testClear()">✕ 清除</button>
+  <button style="width:100%;margin-top:6px;padding:6px;background:rgba(255,183,77,0.15);color:#ffb74d;border:1px solid rgba(255,183,77,0.3);border-radius:4px;font-size:11px;cursor:pointer;"
+    onclick="loadCryptoPreset()">載入加密貨幣測試 (BTC 逗號格式)</button>
+
+  <div class="section-title">Log</div>
+  <div id="log">等待測試...</div>
+</div>
+
+<script>
+// ─── 模擬 window.__chartAI 及 adapter ──────────────────────────────
+window.__chartAI = window.__chartAI || {};
+window.__chartAI._adapters = {};
+
+// Mock adapter — always returns the #chart-area bounding rect
+window.__chartAI.getAdapter = function() {
+  return {
+    name: 'TestPage',
+    getChartRect: function() {
+      return document.getElementById('chart-area').getBoundingClientRect();
+    }
+  };
+};
+
+// ─── 內嵌 draw.js 邏輯 ────────────────────────────────────────────
+(function () {
+  'use strict';
+
+  const OVERLAY_ID = 'chart-ai-price-overlay';
+  let cleanupHandler = null;
+
+  function removeOverlay() {
+    const el = document.getElementById(OVERLAY_ID);
+    if (el) el.remove();
+    if (cleanupHandler) {
+      document.removeEventListener('mousedown', cleanupHandler);
+      cleanupHandler = null;
+    }
+  }
+
+  function getChartRect() {
+    const adapter = window.__chartAI && window.__chartAI.getAdapter && window.__chartAI.getAdapter();
+    if (adapter) {
+      const r = adapter.getChartRect();
+      if (r && r.width > 200 && r.height > 200) return r;
+    }
+    return new DOMRect(0, 0, window.innerWidth - 340, window.innerHeight);
+  }
+
+  function parsePrices(str) {
+    if (!str) return [];
+    // Strip currency symbols, then collapse comma-thousands separators (94,500 → 94500)
+    let s = str.replace(/[$€£¥₩]/g, '');
+    s = s.replace(/(\d),(\d{3})(?!\d)/g, '$1$2');
+    s = s.replace(/(\d),(\d{3})(?!\d)/g, '$1$2'); // second pass for 1,234,567
+    // Keep only digits, dots, hyphens; split on hyphen as range separator
+    return s.replace(/[^\d.\-]/g, '')
+      .split(/\-+/)
+      .map(t => parseFloat(t))
+      .filter(n => !isNaN(n) && n > 0);
+  }
+
+  const NS = 'http://www.w3.org/2000/svg';
+
+  function svgLine(x1, y, x2, color, dash, strokeWidth) {
+    const el = document.createElementNS(NS, 'line');
+    el.setAttribute('x1', x1);
+    el.setAttribute('y1', y.toFixed(1));
+    el.setAttribute('x2', x2);
+    el.setAttribute('y2', y.toFixed(1));
+    el.setAttribute('stroke', color);
+    el.setAttribute('stroke-width', strokeWidth || '1.5');
+    if (dash) el.setAttribute('stroke-dasharray', dash);
+    el.setAttribute('opacity', '0.88');
+    return el;
+  }
+
+  function svgLabel(x, y, text, color) {
+    const g = document.createElementNS(NS, 'g');
+    const bg = document.createElementNS(NS, 'rect');
+    const w = text.length * 6.8 + 10;
+    bg.setAttribute('x', x);
+    bg.setAttribute('y', (y - 15).toFixed(1));
+    bg.setAttribute('width', w.toFixed(0));
+    bg.setAttribute('height', '15');
+    bg.setAttribute('fill', 'rgba(22, 33, 62, 0.9)');
+    bg.setAttribute('rx', '3');
+    g.appendChild(bg);
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', (parseFloat(x) + 5).toFixed(1));
+    t.setAttribute('y', (y - 3).toFixed(1));
+    t.setAttribute('fill', color);
+    t.setAttribute('font-size', '11');
+    t.setAttribute('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
+    t.setAttribute('font-weight', '600');
+    t.textContent = text;
+    g.appendChild(t);
+    return g;
+  }
+
+  function drawLinesWithRange(result, visibleHigh, visibleLow) {
+    removeOverlay();
+
+    if (isNaN(visibleHigh) || isNaN(visibleLow) || visibleHigh <= visibleLow) {
+      return { ok: false, reason: '頂部價格必須大於底部價格' };
+    }
+
+    const chartRect = getChartRect();
+    const priceRange = visibleHigh - visibleLow;
+    const lineX2 = chartRect.width * 0.88;
+
+    function priceToY(price) {
+      const ratio = (visibleHigh - price) / priceRange;
+      const y = ratio * chartRect.height;
+      if (y < -20 || y > chartRect.height + 20) return null;
+      return Math.max(0, Math.min(chartRect.height, y));
+    }
+
+    const isLong = result.direction === 'long';
+    const entryColor = isLong ? '#00c853' : '#ef5350';
+
+    const overlay = document.createElement('div');
+    overlay.id = OVERLAY_ID;
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      left: chartRect.left + 'px',
+      top: chartRect.top + 'px',
+      width: chartRect.width + 'px',
+      height: chartRect.height + 'px',
+      pointerEvents: 'none',
+      zIndex: '9998',
+      overflow: 'hidden'
+    });
+
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', chartRect.width);
+    svg.setAttribute('height', chartRect.height);
+
+    let linesDrawn = 0;
+    const debug = [];
+
+    const entryPrices = parsePrices(result.entry_zone);
+    debug.push('entry_prices: ' + JSON.stringify(entryPrices));
+    if (entryPrices.length >= 2) {
+      const y0 = priceToY(entryPrices[0]);
+      const y1 = priceToY(entryPrices[entryPrices.length - 1]);
+      debug.push('entry y0=' + y0 + ' y1=' + y1);
+      if (y0 !== null && y1 !== null) {
+        const band = document.createElementNS(NS, 'rect');
+        band.setAttribute('x', 0);
+        band.setAttribute('y', Math.min(y0, y1).toFixed(1));
+        band.setAttribute('width', lineX2);
+        band.setAttribute('height', Math.abs(y1 - y0).toFixed(1));
+        band.setAttribute('fill', isLong ? 'rgba(0,200,83,0.08)' : 'rgba(244,67,54,0.08)');
+        svg.appendChild(band);
+        svg.appendChild(svgLine(0, y0, lineX2, entryColor, '4,3', '1'));
+        svg.appendChild(svgLine(0, y1, lineX2, entryColor, '4,3', '1'));
+        svg.appendChild(svgLabel('8', Math.min(y0, y1), '進場區 ' + result.entry_zone, entryColor));
+        linesDrawn += 2;
+      }
+    } else if (entryPrices.length === 1) {
+      const y = priceToY(entryPrices[0]);
+      debug.push('entry y=' + y);
+      if (y !== null) {
+        svg.appendChild(svgLine(0, y, lineX2, entryColor, '6,3', '1.5'));
+        svg.appendChild(svgLabel('8', y, '進場 ' + result.entry_zone, entryColor));
+        linesDrawn++;
+      }
+    }
+
+    const slPrices = parsePrices(result.stop_loss);
+    debug.push('sl_prices: ' + JSON.stringify(slPrices));
+    if (slPrices.length) {
+      const y = priceToY(slPrices[0]);
+      debug.push('sl y=' + y);
+      if (y !== null) {
+        svg.appendChild(svgLine(0, y, lineX2, '#ef5350', '8,4', '2'));
+        svg.appendChild(svgLabel('8', y, '停損 ' + result.stop_loss, '#ef5350'));
+        linesDrawn++;
+      }
+    }
+
+    const tp1Prices = parsePrices(result.tp1);
+    if (tp1Prices.length) {
+      const y = priceToY(tp1Prices[0]);
+      debug.push('tp1 y=' + y);
+      if (y !== null) {
+        svg.appendChild(svgLine(0, y, lineX2, '#00d4ff', '6,3', '1.5'));
+        svg.appendChild(svgLabel('8', y, 'TP1 ' + result.tp1, '#00d4ff'));
+        linesDrawn++;
+      }
+    }
+
+    const tp2Prices = parsePrices(result.tp2);
+    if (tp2Prices.length) {
+      const y = priceToY(tp2Prices[0]);
+      debug.push('tp2 y=' + y);
+      if (y !== null) {
+        svg.appendChild(svgLine(0, y, lineX2, '#ffb74d', '4,4', '1.5'));
+        svg.appendChild(svgLabel('8', y, 'TP2 ' + result.tp2, '#ffb74d'));
+        linesDrawn++;
+      }
+    }
+
+    if (linesDrawn === 0) {
+      return { ok: false, reason: '所有價位均超出可視範圍\n' + debug.join('\n') };
+    }
+
+    overlay.appendChild(svg);
+    document.body.appendChild(overlay);
+
+    return { ok: true, count: linesDrawn, debug: debug };
+  }
+
+  Object.assign(window.__chartAI, { drawLinesWithRange, removeOverlay });
+})();
+
+// ─── Test controls ────────────────────────────────────────────────
+function log(msg) {
+  document.getElementById('log').textContent = msg;
+}
+
+function updateYAxis() {
+  const h = parseFloat(document.getElementById('inpHigh').value);
+  const l = parseFloat(document.getElementById('inpLow').value);
+  if (isNaN(h) || isNaN(l)) return;
+  const mid = ((h + l) / 2).toFixed(4);
+  const q1 = (l + (h - l) * 0.25).toFixed(4);
+  const q3 = (l + (h - l) * 0.75).toFixed(4);
+  document.getElementById('y-top').textContent = h.toFixed(4);
+  document.getElementById('y-mid').textContent = mid;
+  document.getElementById('y-bot').textContent = l.toFixed(4);
+  document.querySelectorAll('#yaxis span').forEach((el, i) => {
+    if (i === 0) el.textContent = h.toFixed(4);
+    else if (i === 4) el.textContent = mid;
+    else if (i === 8) el.textContent = l.toFixed(4);
+    else {
+      const ratio = 1 - (i / 8);
+      el.textContent = (l + (h - l) * ratio).toFixed(4);
+    }
+  });
+}
+
+document.getElementById('inpHigh').addEventListener('input', updateYAxis);
+document.getElementById('inpLow').addEventListener('input', updateYAxis);
+updateYAxis();
+
+function testDraw() {
+  const high = parseFloat(document.getElementById('inpHigh').value);
+  const low  = parseFloat(document.getElementById('inpLow').value);
+  const chartRect = document.getElementById('chart-area').getBoundingClientRect();
+
+  log('chartRect: left=' + chartRect.left.toFixed(0) + ' top=' + chartRect.top.toFixed(0) +
+      ' w=' + chartRect.width.toFixed(0) + ' h=' + chartRect.height.toFixed(0) +
+      '\nvisibleHigh=' + high + ' visibleLow=' + low);
+
+  const result = {
+    direction: document.getElementById('inpDir').value,
+    entry_zone: document.getElementById('inpEntry').value,
+    stop_loss:  document.getElementById('inpSL').value,
+    tp1:        document.getElementById('inpTP1').value,
+    tp2:        document.getElementById('inpTP2').value,
+  };
+
+  const res = window.__chartAI.drawLinesWithRange(result, high, low);
+
+  if (res.ok) {
+    log('✅ 成功畫出 ' + res.count + ' 條線\n\n' +
+        (res.debug || []).join('\n'));
+  } else {
+    log('❌ 失敗: ' + res.reason);
+  }
+}
+
+function testClear() {
+  window.__chartAI.removeOverlay();
+  log('已清除標線');
+}
+
+function loadCryptoPreset() {
+  document.getElementById('inpHigh').value  = '97000';
+  document.getElementById('inpLow').value   = '93000';
+  document.getElementById('inpDir').value   = 'long';
+  document.getElementById('inpEntry').value = '94,300-94,500'; // comma thousands — old bug would break this
+  document.getElementById('inpSL').value    = '93,800';
+  document.getElementById('inpTP1').value   = '95,500';
+  document.getElementById('inpTP2').value   = '96,500';
+  updateYAxis();
+  log('已載入 BTC 加密貨幣測試資料\n進場：94,300-94,500（逗號千分位格式）');
+}
+</script>
+</body>
+</html>
