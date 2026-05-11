@@ -541,6 +541,35 @@
     `;
   }
 
+  // Called by batch-scan.js for granular status during screenshot mode
+  function updateBatchItemStatus(symbol, statusText) {
+    if (!shadow) return;
+    const item = shadow.querySelector(`.batch-item[data-symbol="${CSS.escape(symbol)}"]`);
+    if (!item) return;
+    const statusEl = item.querySelector('.batch-item-status');
+    if (statusEl) statusEl.textContent = statusText;
+  }
+
+  // Called once at scan start so the header shows 📸 or 📝 mode
+  function onBatchModeDetected(mode) {
+    if (!shadow) return;
+    const header = shadow.querySelector('.batch-results-header');
+    if (!header) return;
+    let badge = header.querySelector('.batch-mode-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'batch-mode-badge';
+      header.insertBefore(badge, header.firstChild);
+    }
+    if (mode === 'screenshot') {
+      badge.textContent = '📸 截圖模式';
+      badge.style.cssText = 'font-size:10px;color:#00e676;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);border-radius:8px;padding:1px 7px;margin-right:6px;flex-shrink:0;';
+    } else {
+      badge.textContent = '📝 文字模式';
+      badge.style.cssText = 'font-size:10px;color:#ffd740;background:rgba(255,215,64,0.1);border:1px solid rgba(255,215,64,0.3);border-radius:8px;padding:1px 7px;margin-right:6px;flex-shrink:0;';
+    }
+  }
+
   function updateBatchItemDone(symbol, result) {
     if (!shadow) return;
     const item = shadow.querySelector(`.batch-item[data-symbol="${CSS.escape(symbol)}"]`);
@@ -1813,6 +1842,8 @@
     setBatchCallback,
     onBatchItemStart,
     onBatchItemDone,
+    onBatchItemStatus: updateBatchItemStatus,
+    onBatchModeDetected,
     onBatchComplete,
     setBatchResults
   });
