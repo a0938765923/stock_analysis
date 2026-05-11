@@ -416,6 +416,102 @@
   line-height: 1.45;
 }
 
+/* ── Entry timing section ─────────────────── */
+
+.entry-timing-section {
+  padding-top: 6px;
+}
+
+.timing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.timing-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.timing-strong   { background: rgba(0,200,83,0.15);  color: #00c853; border: 1px solid rgba(0,200,83,0.35);  }
+.timing-good     { background: rgba(118,255,3,0.1);  color: #aeea00; border: 1px solid rgba(118,255,3,0.3);  }
+.timing-moderate { background: rgba(255,171,64,0.12); color: #ffab40; border: 1px solid rgba(255,171,64,0.35); }
+.timing-wait     { background: rgba(244,67,54,0.1);  color: #ef5350; border: 1px solid rgba(244,67,54,0.3);  }
+
+.signal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.signal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+.signal-confirmed { background: rgba(0,200,83,0.07);  border: 1px solid rgba(0,200,83,0.2);  }
+.signal-pending   { background: rgba(255,171,64,0.07); border: 1px solid rgba(255,171,64,0.2); }
+.signal-negative  { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+
+.signal-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.signal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.signal-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ddd;
+  line-height: 1.3;
+}
+
+.signal-detail {
+  font-size: 10px;
+  color: #999;
+  line-height: 1.4;
+}
+
+.timing-wait-box,
+.timing-invalid-box {
+  border-radius: 5px;
+  padding: 6px 9px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.timing-wait-box    { background: rgba(255,171,64,0.07); border: 1px solid rgba(255,171,64,0.2); }
+.timing-invalid-box { background: rgba(244,67,54,0.07);  border: 1px solid rgba(244,67,54,0.2);  }
+
+.timing-wait-label,
+.timing-invalid-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #888;
+}
+
+.timing-wait-text    { font-size: 11px; color: #ffab40; line-height: 1.45; }
+.timing-invalid-text { font-size: 11px; color: #ef5350; line-height: 1.45; }
+
 /* ── Entry strategy section ───────────────── */
 
 .strategy-section {

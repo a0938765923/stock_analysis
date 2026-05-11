@@ -161,6 +161,68 @@
       </div>`;
   }
 
+  // ── Entry timing HTML builder ────────────────────────────────────────────
+
+  function buildEntryTimingHtml(timing) {
+    if (!timing) return '';
+
+    const qualityMap = {
+      strong:   { label: '強力買點', cls: 'timing-strong',   icon: '🟢' },
+      good:     { label: '良好買點', cls: 'timing-good',     icon: '🟡' },
+      moderate: { label: '謹慎考慎', cls: 'timing-moderate', icon: '🟠' },
+      wait:     { label: '等待時機', cls: 'timing-wait',     icon: '🔴' }
+    };
+    const q = qualityMap[timing.quality] || qualityMap['wait'];
+
+    const statusIcon = s => s === 'confirmed' ? '✅' : s === 'pending' ? '⏳' : '❌';
+    const statusCls  = s => s === 'confirmed' ? 'signal-confirmed' : s === 'pending' ? 'signal-pending' : 'signal-negative';
+
+    const catLabels = {
+      trend: '趨勢', momentum: '動量', volatility: '波動', volume: '量能', price_action: '價格結構'
+    };
+
+    // Group signals by category using the knowledge base
+    const allSignals = window.__chartAI && window.__chartAI.ENTRY_SIGNALS ? window.__chartAI.ENTRY_SIGNALS : [];
+    const signalMap  = {};
+    if (Array.isArray(timing.signals)) {
+      for (const s of timing.signals) signalMap[s.id] = s;
+    }
+
+    // Build rows: confirmed first, then pending, then negative
+    const rows = Array.isArray(timing.signals) ? timing.signals.map(s => `
+      <div class="signal-row ${statusCls(s.status)}">
+        <span class="signal-icon">${statusIcon(s.status)}</span>
+        <div class="signal-body">
+          <span class="signal-name">${escapeHtml(s.name_zh || s.id || '')}</span>
+          ${s.detail ? `<span class="signal-detail">${escapeHtml(s.detail)}</span>` : ''}
+        </div>
+      </div>`).join('') : '';
+
+    const count = typeof timing.confluence_count === 'number' ? timing.confluence_count : '';
+
+    return `
+      <div class="result-section entry-timing-section">
+        <div class="timing-header">
+          <span class="result-label">買進時機</span>
+          <span class="timing-badge ${q.cls}">${q.icon} ${q.label}${count !== '' ? `（${count} 信號確認）` : ''}</span>
+        </div>
+
+        ${rows ? `<div class="signal-list">${rows}</div>` : ''}
+
+        ${timing.optimal_wait ? `
+        <div class="timing-wait-box">
+          <span class="timing-wait-label">⏳ 等待條件</span>
+          <span class="timing-wait-text">${escapeHtml(timing.optimal_wait)}</span>
+        </div>` : ''}
+
+        ${timing.invalidation ? `
+        <div class="timing-invalid-box">
+          <span class="timing-invalid-label">⛔ 失效條件</span>
+          <span class="timing-invalid-text">${escapeHtml(timing.invalidation)}</span>
+        </div>` : ''}
+      </div>`;
+  }
+
   // ── Result card HTML builder ─────────────────────────────────────────────
 
   function buildResultCardHtml(result, timestamp, lotInfo) {
@@ -285,6 +347,8 @@
           <span class="result-label">指標總評</span>
           ${techSummaryHtml}
         </div>` : ''}
+
+        ${buildEntryTimingHtml(result.entry_timing)}
 
         ${buildStrategyHtml(result.entry_strategy)}
 

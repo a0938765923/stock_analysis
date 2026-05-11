@@ -36,7 +36,8 @@
     'visible_high',
     'visible_low',
     'entry_strategy',
-    'key_scenarios'
+    'key_scenarios',
+    'entry_timing'
   ];
 
   const SCHEMA_INSTRUCTION =
@@ -50,7 +51,8 @@
     '"candlestick_patterns":[{"name_zh":"中文型態名","name_en":"English Name","signal":"bullish/bearish/neutral","candles":1,"position":"bottom_rev/top_rev/continuation/any","reliability":"高/中/低","desc":"特徵與預示說明"}],' +
     '"technical_summary":{"overall":"綜合評級","indicators":"關鍵指標摘要"},' +
     '"entry_strategy":{"plan_a":{"label":"方案A標題（推薦）","recommended":true,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr_tp1":"至TP1風報比","rr_tp2":"至TP2風報比"},"plan_b":{"label":"方案B標題（備選）","recommended":false,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr":"風報比","note":"注意事項"}},' +
-    '"key_scenarios":[{"condition":"情境一描述","action":"對應操作"},{"condition":"情境二描述","action":"對應操作"},{"condition":"情境三描述（止損觸發）","action":"對應操作"},{"condition":"情境四描述（突破延伸）","action":"對應操作"}]}';
+    '"key_scenarios":[{"condition":"情境一描述","action":"對應操作"},{"condition":"情境二描述","action":"對應操作"},{"condition":"情境三描述（止損觸發）","action":"對應操作"},{"condition":"情境四描述（突破延伸）","action":"對應操作"}],' +
+    '"entry_timing":{"quality":"strong/good/moderate/wait","confluence_count":0,"signals":[{"id":"信號id如ma_golden_cross","name_zh":"信號中文名","status":"confirmed/pending/negative","detail":"從圖表觀察到的具體描述"}],"optimal_wait":"尚未成立的最關鍵信號，等待條件","invalidation":"使此進場設置失效的條件"}}';
 
   Object.assign(window.__chartAI, {
     parseJSON,
