@@ -12,17 +12,18 @@ import { generateDailyBriefing, buildBriefingPrompt } from './briefing.js';
 const SETTINGS_KEY = 'chart_ai_settings';
 /** 記住自訂 API 上次成功的 vision 格式，避免每次都輪詢多種 payload */
 const CUSTOM_VISION_HINTS_KEY = 'chart_ai_custom_vision_hints';
-/** 單次 vision 請求逾時（ms）；中轉卡住時不要無限等待 */
-const CUSTOM_VISION_FETCH_MS = 60000;
+/** 單次 vision 請求逾時（ms）；中轉卡住時不要無限等待
+ *  120s：prompt 現在包含 K線/進場信號/圖表型態/量能 4 個知識庫，token 數較大
+ */
+const CUSTOM_VISION_FETCH_MS = 120000;
 
 /** 一般 API 請求逾時（ms），用於 Anthropic / MiniMax */
 const DEFAULT_FETCH_TIMEOUT_MS = 90000;
 
 /** callCustom / callCustomMulti 整體操作的天花板（ms）
- *  避免 3 rounds × 7 formats × 60s = 理論 21 分鐘
- *  100s 允許最多 1 次完整嘗試（60s）加上第二次嘗試（40s）
+ *  300s 允許最多 2 次完整嘗試（各 120s）+ 備用格式重試空間
  */
-const CUSTOM_GLOBAL_TIMEOUT_MS = 100000;
+const CUSTOM_GLOBAL_TIMEOUT_MS = 300000;
 
 /** callCustom / callCustomMulti 最大 rounds 數（圖片尺寸層） */
 const CUSTOM_MAX_ROUNDS = 3;
@@ -380,7 +381,7 @@ async function callAnthropic(dataUrl, prompt, settings) {
       signal: AbortSignal.timeout(DEFAULT_FETCH_TIMEOUT_MS),
       body: JSON.stringify({
         model: settings.anthropicModel || 'claude-sonnet-4-5',
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [
           {
             role: 'user',
@@ -451,7 +452,7 @@ async function callMiniMax(dataUrl, prompt, settings) {
       signal: AbortSignal.timeout(DEFAULT_FETCH_TIMEOUT_MS),
       body: JSON.stringify({
         model: settings.minimaxModel || 'MiniMax-M2.5',
-        max_tokens: 1024,
+        max_tokens: 2048,
         temperature: 0.3,
         messages: [
           {
@@ -550,7 +551,7 @@ function customVisionRetryEligible(status, errorMessage) {
   return false;
 }
 
-function customBaseChatBody(model, messages, maxTokens = 1024) {
+function customBaseChatBody(model, messages, maxTokens = 2048) {
   return {
     model,
     max_tokens: maxTokens,
@@ -922,7 +923,7 @@ async function callAnthropicMulti(dataUrls, prompt, settings) {
       signal: AbortSignal.timeout(DEFAULT_FETCH_TIMEOUT_MS),
       body: JSON.stringify({
         model: settings.anthropicModel || 'claude-sonnet-4-5',
-        max_tokens: 1536,
+        max_tokens: 3072,
         messages: [{ role: 'user', content: contentParts }]
       })
     });
@@ -982,7 +983,7 @@ async function callMiniMaxMulti(dataUrls, prompt, settings) {
       signal: AbortSignal.timeout(DEFAULT_FETCH_TIMEOUT_MS),
       body: JSON.stringify({
         model: settings.minimaxModel || 'MiniMax-M2.5',
-        max_tokens: 1536,
+        max_tokens: 3072,
         temperature: 0.3,
         messages: [{ role: 'user', content: contentParts }]
       })
