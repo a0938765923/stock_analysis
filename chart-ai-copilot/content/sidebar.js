@@ -171,9 +171,29 @@
       ? `<ul class="key-points">${result.key_points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>`
       : '';
 
-    const patternsHtml = Array.isArray(result.candlestick_patterns) && result.candlestick_patterns.length
-      ? `<ul class="key-points">${result.candlestick_patterns.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>`
-      : '';
+    const patternsHtml = (() => {
+      if (!Array.isArray(result.candlestick_patterns) || !result.candlestick_patterns.length) return '';
+      const items = result.candlestick_patterns.map(p => {
+        if (typeof p === 'string') return `<li>${escapeHtml(p)}</li>`;
+        const sigClass = p.signal === 'bullish' ? 'pattern-badge--bull' :
+                         p.signal === 'bearish' ? 'pattern-badge--bear' : 'pattern-badge--neutral';
+        const sigText  = p.signal === 'bullish' ? '看多' :
+                         p.signal === 'bearish' ? '看空' : '中性';
+        const posText  = p.position === 'bottom_rev' ? '底部反轉' :
+                         p.position === 'top_rev'    ? '頂部反轉' :
+                         p.position === 'continuation' ? '趨勢延續' : '';
+        return `<li class="pattern-item">
+          <div class="pattern-header">
+            <span class="pattern-name">${escapeHtml(p.name_zh || '')}${p.name_en ? ` <span class="pattern-en">${escapeHtml(p.name_en)}</span>` : ''}</span>
+            <span class="pattern-badge ${sigClass}">${sigText}</span>
+            ${p.candles ? `<span class="pattern-candle">${p.candles}K</span>` : ''}
+          </div>
+          ${posText || p.reliability ? `<div class="pattern-meta">${posText ? `<span>📍 ${escapeHtml(posText)}</span>` : ''}${p.reliability ? `<span>可靠度: ${escapeHtml(p.reliability)}</span>` : ''}</div>` : ''}
+          ${p.desc ? `<div class="pattern-desc">${escapeHtml(p.desc)}</div>` : ''}
+        </li>`;
+      }).join('');
+      return `<ul class="pattern-list">${items}</ul>`;
+    })();
 
     const techSummaryHtml = result.technical_summary
       ? `<span class="result-value">${escapeHtml(result.technical_summary.overall || '')}${result.technical_summary.indicators ? ' — ' + escapeHtml(result.technical_summary.indicators) : ''}</span>`

@@ -32,6 +32,7 @@
         "platform-adapters/investing.js",
         "platform-adapters/registry.js",
         "shared/constants.js",
+        "shared/candlestick-patterns.js",
         "shared/schema.js",
         "shared/prompt.js",
         "content/profile-memory.js",

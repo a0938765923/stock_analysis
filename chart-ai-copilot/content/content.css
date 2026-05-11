@@ -323,6 +323,99 @@
   color: #00d4ff;
 }
 
+/* ── Candlestick pattern list ─────────────── */
+
+.pattern-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pattern-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pattern-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pattern-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0e0e0;
+  flex: 1;
+}
+
+.pattern-en {
+  font-size: 10px;
+  color: #888;
+  font-weight: 400;
+}
+
+.pattern-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pattern-badge--bull {
+  background: rgba(0, 200, 83, 0.15);
+  color: #00c853;
+  border: 1px solid rgba(0, 200, 83, 0.3);
+}
+
+.pattern-badge--bear {
+  background: rgba(244, 67, 54, 0.15);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.pattern-badge--neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pattern-candle {
+  font-size: 10px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+
+.pattern-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pattern-meta span {
+  font-size: 10px;
+  color: #777;
+}
+
+.pattern-desc {
+  font-size: 11px;
+  color: #bbb;
+  line-height: 1.45;
+}
+
 /* ── Entry strategy section ───────────────── */
 
 .strategy-section {
