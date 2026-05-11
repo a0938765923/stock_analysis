@@ -37,7 +37,9 @@
     'visible_low',
     'entry_strategy',
     'key_scenarios',
-    'entry_timing'
+    'entry_timing',
+    'chart_patterns',
+    'volume_analysis'
   ];
 
   const SCHEMA_INSTRUCTION =
@@ -52,7 +54,9 @@
     '"technical_summary":{"overall":"綜合評級","indicators":"關鍵指標摘要"},' +
     '"entry_strategy":{"plan_a":{"label":"方案A標題（推薦）","recommended":true,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr_tp1":"至TP1風報比","rr_tp2":"至TP2風報比"},"plan_b":{"label":"方案B標題（備選）","recommended":false,"trigger":"觸發條件","confirmation":"確認信號","entry":"入場價格","rr":"風報比","note":"注意事項"}},' +
     '"key_scenarios":[{"condition":"情境一描述","action":"對應操作"},{"condition":"情境二描述","action":"對應操作"},{"condition":"情境三描述（止損觸發）","action":"對應操作"},{"condition":"情境四描述（突破延伸）","action":"對應操作"}],' +
-    '"entry_timing":{"quality":"strong/good/moderate/wait","confluence_count":0,"signals":[{"id":"信號id如ma_golden_cross","name_zh":"信號中文名","status":"confirmed/pending/negative","detail":"從圖表觀察到的具體描述"}],"optimal_wait":"尚未成立的最關鍵信號，等待條件","invalidation":"使此進場設置失效的條件"}}';
+    '"entry_timing":{"quality":"strong/good/moderate/wait","confluence_count":0,"signals":[{"id":"信號id如ma_golden_cross","name_zh":"信號中文名","status":"confirmed/pending/negative","detail":"從圖表觀察到的具體描述"}],"optimal_wait":"尚未成立的最關鍵信號，等待條件","invalidation":"使此進場設置失效的條件"},' +
+    '"chart_patterns":[{"name_zh":"型態中文名","name_en":"Pattern Name","type":"reversal/continuation/bilateral","direction":"bullish/bearish/bilateral","status":"forming/confirmed/breakout","reliability":"可靠度如89%","key_levels":{"neckline":"頸線價位","target":"目標價","stop":"止損位"},"volume_ok":true,"note":"型態觀察說明"}],' +
+    '"volume_analysis":{"profile_visible":true,"poc":"POC價格","vah":"VAH價格","val":"VAL價格","hvn":["HVN1價格","HVN2價格"],"lvn":["LVN1價格"],"current_position":"當前價格相對POC/VAH/VAL的位置描述","profile_signal":"量能分布給出的交易暗示","footprint_visible":false,"delta":"正/負/divergence/N/A","imbalance":"買方主導/賣方主導/均衡/N/A","cvd_signal":"CVD信號描述或N/A","volume_structure":"從標準量柱看出的量價結構（如縮量回調/放量突破/量價背離）"}}';
 
   Object.assign(window.__chartAI, {
     parseJSON,

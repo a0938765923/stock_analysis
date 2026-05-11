@@ -1600,3 +1600,154 @@
 .pine-copy-btn { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
 .pine-inject-btn { background: rgba(46,125,50,0.2); color: #66bb6a; border: 1px solid rgba(46,125,50,0.3); }
 .pine-status { font-size: 11px; margin-top: 6px; min-height: 16px; color: #aaa; }
+
+/* ── Chart Patterns (圖表型態) ────────────────────────── */
+.cp-section { margin-top: 10px; }
+.cp-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+
+.cp-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.cp-item-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.cp-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0e0e0;
+  flex: 1;
+}
+
+.cp-name-en {
+  font-weight: 400;
+  color: #888;
+  font-size: 11px;
+}
+
+.cp-badge {
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.cp-badge--bull    { background: rgba(0,200,83,0.18);  color: #00c853; border: 1px solid rgba(0,200,83,0.3); }
+.cp-badge--bear    { background: rgba(244,67,54,0.18); color: #ef5350; border: 1px solid rgba(244,67,54,0.3); }
+.cp-badge--neutral { background: rgba(255,193,7,0.15); color: #ffd740; border: 1px solid rgba(255,193,7,0.3); }
+
+.cp-status {
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.cp-status--forming   { background: rgba(255,193,7,0.1);  color: #ffd740; }
+.cp-status--confirmed { background: rgba(0,212,255,0.1);  color: #00d4ff; }
+.cp-status--breakout  { background: rgba(0,200,83,0.12);  color: #00e676; }
+
+.cp-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10px;
+  color: #777;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.cp-levels {
+  font-size: 11px;
+  color: #aaa;
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+  padding: 3px 7px;
+  margin-top: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.cp-note {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Volume Analysis (量能分析) ──────────────────────── */
+.va-section { margin-top: 10px; }
+
+.va-structure {
+  font-size: 11px;
+  color: #b0bec5;
+  background: rgba(0,212,255,0.05);
+  border-left: 2px solid rgba(0,212,255,0.3);
+  padding: 4px 8px;
+  border-radius: 0 4px 4px 0;
+  margin: 4px 0 8px 0;
+  line-height: 1.4;
+}
+
+.va-group {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+}
+
+.va-group-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #00d4ff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.va-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.va-label {
+  font-size: 10px;
+  color: #666;
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.va-price {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+}
+
+.va-price--poc {
+  color: #ffd740;
+}
+
+.va-value {
+  font-size: 11px;
+  color: #bbb;
+  flex: 1;
+}
+
+.va-signal {
+  font-size: 11px;
+  color: #90caf9;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  line-height: 1.4;
+}

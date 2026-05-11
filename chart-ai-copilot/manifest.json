@@ -34,6 +34,8 @@
         "shared/constants.js",
         "shared/candlestick-patterns.js",
         "shared/entry-timing.js",
+        "shared/chart-patterns.js",
+        "shared/volume-analysis.js",
         "shared/schema.js",
         "shared/prompt.js",
         "content/profile-memory.js",

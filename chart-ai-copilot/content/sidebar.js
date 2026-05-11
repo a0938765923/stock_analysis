@@ -223,6 +223,94 @@
       </div>`;
   }
 
+  // ── Chart patterns HTML builder ──────────────────────────────────────────
+
+  function buildChartPatternsHtml(patterns) {
+    if (!Array.isArray(patterns) || !patterns.length) return '';
+    const typeLabel = t => t === 'reversal' ? '反轉' : t === 'continuation' ? '延續' : '雙向';
+    const dirLabel  = d => d === 'bullish' ? '看多' : d === 'bearish' ? '看空' : '雙向';
+    const dirCls    = d => d === 'bullish' ? 'cp-badge--bull' : d === 'bearish' ? 'cp-badge--bear' : 'cp-badge--neutral';
+    const statusLabel = s => s === 'forming' ? '形成中' : s === 'confirmed' ? '已完成' : s === 'breakout' ? '已突破' : s;
+    const statusCls   = s => s === 'breakout' ? 'cp-status--breakout' : s === 'confirmed' ? 'cp-status--confirmed' : 'cp-status--forming';
+
+    const items = patterns.map(p => {
+      const levels = p.key_levels || {};
+      const levelsHtml = [
+        levels.neckline && levels.neckline !== 'N/A' ? `頸線 ${escapeHtml(levels.neckline)}` : '',
+        levels.target   ? `目標 ${escapeHtml(levels.target)}` : '',
+        levels.stop     ? `止損 ${escapeHtml(levels.stop)}` : ''
+      ].filter(Boolean).join(' · ');
+
+      return `
+        <div class="cp-item">
+          <div class="cp-item-header">
+            <span class="cp-name">${escapeHtml(p.name_zh || '')}${p.name_en ? ` <span class="cp-name-en">${escapeHtml(p.name_en)}</span>` : ''}</span>
+            <span class="cp-badge ${dirCls(p.direction)}">${dirLabel(p.direction)}</span>
+            <span class="cp-status ${statusCls(p.status)}">${statusLabel(p.status)}</span>
+          </div>
+          <div class="cp-meta">
+            <span>${escapeHtml(typeLabel(p.type))}型態</span>
+            ${p.reliability ? `<span>可靠度 ${escapeHtml(p.reliability)}</span>` : ''}
+            ${p.volume_ok != null ? `<span>${p.volume_ok ? '✅ 量能配合' : '⚠ 量能不足'}</span>` : ''}
+          </div>
+          ${levelsHtml ? `<div class="cp-levels">${levelsHtml}</div>` : ''}
+          ${p.note ? `<div class="cp-note">${escapeHtml(p.note)}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="result-section cp-section">
+        <span class="result-label">圖表型態</span>
+        <div class="cp-list">${items}</div>
+      </div>`;
+  }
+
+  // ── Volume analysis HTML builder ─────────────────────────────────────────
+
+  function buildVolumeAnalysisHtml(va) {
+    if (!va) return '';
+
+    const hasProfile = va.profile_visible &&
+      (va.poc || va.vah || va.val);
+    const hasFootprint = va.footprint_visible &&
+      (va.delta || va.imbalance || va.cvd_signal);
+
+    const profileRows = hasProfile ? [
+      va.poc && va.poc !== 'N/A' ? `<div class="va-row"><span class="va-label">POC</span><span class="va-price va-price--poc">${escapeHtml(va.poc)}</span></div>` : '',
+      va.vah && va.vah !== 'N/A' ? `<div class="va-row"><span class="va-label">VAH</span><span class="va-price">${escapeHtml(va.vah)}</span></div>` : '',
+      va.val && va.val !== 'N/A' ? `<div class="va-row"><span class="va-label">VAL</span><span class="va-price">${escapeHtml(va.val)}</span></div>` : '',
+      Array.isArray(va.hvn) && va.hvn.length ? `<div class="va-row"><span class="va-label">HVN</span><span class="va-value">${va.hvn.map(escapeHtml).join(' / ')}</span></div>` : '',
+      Array.isArray(va.lvn) && va.lvn.length ? `<div class="va-row"><span class="va-label">LVN</span><span class="va-value">${va.lvn.map(escapeHtml).join(' / ')}</span></div>` : ''
+    ].filter(Boolean).join('') : '';
+
+    const footprintRows = hasFootprint ? [
+      va.delta && va.delta !== 'N/A' ? `<div class="va-row"><span class="va-label">Delta</span><span class="va-value">${escapeHtml(va.delta)}</span></div>` : '',
+      va.imbalance && va.imbalance !== 'N/A' ? `<div class="va-row"><span class="va-label">失衡</span><span class="va-value">${escapeHtml(va.imbalance)}</span></div>` : '',
+      va.cvd_signal && va.cvd_signal !== 'N/A' ? `<div class="va-row"><span class="va-label">CVD</span><span class="va-value">${escapeHtml(va.cvd_signal)}</span></div>` : ''
+    ].filter(Boolean).join('') : '';
+
+    const hasAny = profileRows || footprintRows || va.volume_structure || va.current_position || va.profile_signal;
+    if (!hasAny) return '';
+
+    return `
+      <div class="result-section va-section">
+        <span class="result-label">量能分析</span>
+        ${va.volume_structure ? `<div class="va-structure">${escapeHtml(va.volume_structure)}</div>` : ''}
+        ${profileRows ? `
+          <div class="va-group">
+            <div class="va-group-title">Volume Profile</div>
+            ${profileRows}
+            ${va.current_position ? `<div class="va-row"><span class="va-label">位置</span><span class="va-value">${escapeHtml(va.current_position)}</span></div>` : ''}
+            ${va.profile_signal ? `<div class="va-signal">${escapeHtml(va.profile_signal)}</div>` : ''}
+          </div>` : ''}
+        ${footprintRows ? `
+          <div class="va-group">
+            <div class="va-group-title">Order Flow</div>
+            ${footprintRows}
+          </div>` : ''}
+      </div>`;
+  }
+
   // ── Result card HTML builder ─────────────────────────────────────────────
 
   function buildResultCardHtml(result, timestamp, lotInfo) {
@@ -353,6 +441,10 @@
         ${buildStrategyHtml(result.entry_strategy)}
 
         ${buildScenariosHtml(result.key_scenarios)}
+
+        ${buildChartPatternsHtml(result.chart_patterns)}
+
+        ${buildVolumeAnalysisHtml(result.volume_analysis)}
 
         ${lotHtml}
 
