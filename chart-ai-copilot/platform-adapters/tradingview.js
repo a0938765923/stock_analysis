@@ -34,7 +34,13 @@
     },
 
     getSymbol() {
-      // DOM first — more accurate after setSymbol() switches the chart
+      // Header toolbar button shows the exact ticker (e.g. "MSFT") — most reliable after setSymbol()
+      const headerBtn = document.querySelector('#header-toolbar-symbol-search');
+      if (headerBtn) {
+        const text = headerBtn.textContent.trim();
+        if (text) return text;
+      }
+      // Fallback: chart legend (may include extra text like "MSFT • D")
       const domSels = [
         '[data-name="legend-source-title"]',
         '[class*="pane-legend-title__description"]',
@@ -48,7 +54,7 @@
           if (text) return text;
         }
       }
-      // Fallback: URL path (chart-session ID, not ideal but better than nothing)
+      // Last resort: URL path
       const m = window.location.pathname.match(/\/chart\/([^/?]+)/);
       return m ? m[1] : null;
     },
@@ -173,7 +179,9 @@
         const current = norm(this.getSymbol());
         // Accept: exact match, or one is a suffix of the other (handles EXCHANGE:SYMBOL prefixes)
         if (current && target &&
-            (current === target || current.endsWith(target) || target.endsWith(current))) {
+            (current === target ||
+             current.endsWith(target) || target.endsWith(current) ||
+             current.includes(target) || target.includes(current))) {
           return true;
         }
         await _sleep(400);
